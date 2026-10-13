@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My AI Chat</title>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #F7F1E8;
+    color: #493728;
+}
+
+.app {
+    display: flex;
+    gap: 12px;
+    height: 100vh;
+    padding: 12px;
+}
+
+.sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    padding: 20px 12px;
+    border-radius: 16px;
+    background: #E9DDCD;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: bold;
+    margin: 5px 4px 25px;
+    color: #65482F;
+}
+
+.nav-btn, .logout-btn {
+    width: 100%;
+    padding: 12px 10px;
+    margin-bottom: 7px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #594532;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.nav-btn:hover, .nav-btn.active, .logout-btn:hover {
+    background: #D8C4AB;
+}
+
+.section-title {
+    margin: 22px 8px 10px;
+    font-size: 11px;
+    color: #8B735B;
+    letter-spacing: 1px;
+}
+
+#history {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 10px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.history-item:hover, .history-item.active {
+    background: #D8C4AB;
+}
+
+.logout-btn {
+    border-top: 1px solid #D3BFA7;
+    border-radius: 0;
+    margin-top: 10px;
+    padding-top: 16px;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #E8DCCB;
+    border-radius: 16px;
+    background: #FFFCF7;
+}
+
+.topbar {
+    min-height: 62px;
+    padding: 15px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #EFE5D8;
+}
+
+.topbar h3 { font-size: 17px; }
+
+.status {
+    color: #71835F;
+    font-size: 12px;
+}
+
+#chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px;
+}
+
+.welcome {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.bot-icon {
+    width: 62px;
+    height: 62px;
+    margin-bottom: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    background: #E7D8C5;
+    border: 1px solid #D6C3AC;
+    font-size: 31px;
+}
+
+.welcome h1 {
+    font-size: clamp(22px, 3vw, 31px);
+    margin-bottom: 12px;
+}
+
+.welcome p {
+    max-width: 430px;
+    color: #897765;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.suggestions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: min(100%, 530px);
+    margin-top: 26px;
+}
+
+.suggestion {
+    padding: 14px;
+    border: 1px solid #E4D5C2;
+    border-radius: 12px;
+    background: #FBF5EC;
+    color: #624B36;
+    text-align: left;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.suggestion:hover {
+    background: #F0E2D0;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+
+.message.user { justify-content: flex-end; }
+
+.bubble {
+    max-width: min(78%, 650px);
+    padding: 13px 15px;
+    border-radius: 13px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.user .bubble {
+    background: #E8D6C0;
+    border-bottom-right-radius: 4px;
+}
+
+.ai .bubble {
+    background: #F2EADF;
+    border-bottom-left-radius: 4px;
+}
+
+.mini-bot {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: #E7D8C5;
+}
+
+.input-area {
+    padding: 13px 18px 15px;
+    border-top: 1px solid #EFE5D8;
+}
+
+.input-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 850px;
+    margin: auto;
+    padding: 7px 8px 7px 15px;
+    border: 1px solid #DDCBB5;
+    border-radius: 14px;
+    background: white;
+}
+
+#userInput {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: #493728;
+    font-size: 14px;
+}
+
+.send-btn {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 10px;
+    background: #76583D;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.send-btn:hover { background: #5E432C; }
+
+.send-btn:disabled { opacity: 0.5; }
+
+.disclaimer {
+    margin-top: 9px;
+    text-align: center;
+    font-size: 11px;
+    color: #A18F7C;
+}
+
+.page {
+    max-width: 600px;
+    margin: 35px auto;
+    padding: 25px;
+    border: 1px solid #E4D5C2;
+    border-radius: 14px;
+    background: #FBF5EC;
+}
+
+.page h2 { margin-bottom: 12px; }
+
+.page p {
+    color: #897765;
+    line-height: 1.6;
+    margin-bottom: 18px;
+}
+
+.action-btn {
+    padding: 11px 15px;
+    margin: 4px 5px 4px 0;
+    border: 0;
+    border-radius: 9px;
+    background: #76583D;
+    color: white;
+    cursor: pointer;
+}
+
+.action-btn.secondary {
+    background: #E8D6C0;
+    color: #493728;
+}
+
+@media (max-width: 650px) {
+    .app { padding: 6px; gap: 6px; }
+
+    .sidebar {
+        width: 62px;
+        padding: 13px 5px;
+        align-items: center;
+    }
+
+    .logo { font-size: 22px; margin: 5px 0 24px; }
+    .logo span, .nav-label, .section-title, #history { display: none; }
+    .nav-btn, .logout-btn { text-align: center; padding: 12px 2px; font-size: 17px; }
+    .topbar { padding: 14px; }
+    #chat { padding: 14px 10px; }
+    .input-area { padding: 10px; }
+    .suggestions { grid-template-columns: 1fr; gap: 8px; }
+    .suggestion { padding: 10px; }
+    .bubble { max-width: 88%; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="logo">🤖 <span>My AI Chat</span></div>
+
+        <nav>
+            <button class="nav-btn active" data-page="new"
+                onclick="newChat()">＋ <span class="nav-label">New Chat</span></button>
+
+            <button class="nav-btn" data-page="home"
+                onclick="home()">⌂ <span class="nav-label">Home</span></button>
+
+            <button class="nav-btn" data-page="history"
+                onclick="showHistory()">◷ <span class="nav-label">Chat History</span></button>
+
+            <button class="nav-btn" data-page="settings"
+                onclick="settings()">⚙ <span class="nav-label">Settings</span></button>
+        </nav>
+
+        <div class="section-title">RECENT CHATS</div>
+        <div id="history"></div>
+
+        <button class="logout-btn" onclick="logout()">
+            ↪ <span class="nav-label">Logout</span>
+        </button>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <h3>My AI Chat</h3>
+            <span class="status" id="status">Ready to help</span>
+        </header>
+
+        <section id="chat"></section>
+
+        <footer class="input-area">
+            <form class="input-box" id="chatForm">
+                <input id="userInput" type="text"
+                    placeholder="Ask me anything..." autocomplete="off">
+                <button class="send-btn" id="sendBtn" type="submit">↑</button>
+            </form>
+            <div class="disclaimer">My AI Chat · Front-end demo</div>
+        </footer>
+    </main>
+
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("userInput");
+const historyBox = document.getElementById("history");
+const statusText = document.getElementById("status");
+const sendBtn = document.getElementById("sendBtn");
+
+let conversations = [];
+let currentId = null;
+let loggedOut = false;
+
+function makeId() {
+    return Date.now().toString() + Math.random().toString(16).slice(2);
+}
+
+function getCurrentChat() {
+    return conversations.find(c => c.id === currentId);
+}
+
+function setActive(page) {
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.page === page);
+    });
+}
+
+function welcomeScreen() {
+    chat.innerHTML = `
+        <div class="welcome">
+            <div class="bot-icon">🤖</div>
+            <h1>How can I help you today?</h1>
+            <p>Your personal chat assistant is ready to help you explore ideas,
+            learn something new, and solve problems.</p>
+
+            <div class="suggestions">
+                <button class="suggestion"
+                    onclick="askSuggestion('Explain a difficult topic simply')">
+                    📚 Explain a topic<br>Make learning easier
+                </button>
+                <button class="suggestion"
+                    onclick="askSuggestion('Give me creative ideas')">
+                    💡 Generate ideas<br>Explore something new
+                </button>
+                <button class="suggestion"
+                    onclick="askSuggestion('Help me write a paragraph')">
+                    ✍️ Help me write<br>Improve my writing
+                </button>
+                <button class="suggestion"
+                    onclick="askSuggestion('Give me a programming tip')">
+                    💻 Coding help<br>Learn programming
+                </button>
+            </div>
+        </div>`;
+}
+
+function addMessage(message, type) {
+    const row = document.createElement("div");
+    row.className = "message " + type;
+
+    if (type === "ai") {
+        const icon = document.createElement("div");
+        icon.className = "mini-bot";
+        icon.textContent = "🤖";
+        row.appendChild(icon);
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = message;
+    row.appendChild(bubble);
+    chat.appendChild(row);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function renderConversation(conversation) {
+    chat.innerHTML = "";
+
+    if (!conversation || conversation.messages.length === 0) {
+        welcomeScreen();
+        return;
+    }
+
+    conversation.messages.forEach(message => {
+        addMessage(message.text, message.type);
+    });
+}
+
+function createConversation() {
+    const conversation = {
+        id: makeId(),
+        title: "New Chat",
+        messages: []
+    };
+
+    conversations.unshift(conversation);
+    currentId = conversation.id;
+    updateHistory();
+    return conversation;
+}
+
+function newChat() {
+    loggedOut = false;
+    currentId = null;
+    welcomeScreen();
+    enableInput();
+    setActive("new");
+    statusText.textContent = "Ready to help";
+    input.focus();
+}
+
+function home() {
+    newChat();
+    setActive("home");
+}
+
+function updateHistory() {
+    historyBox.innerHTML = "";
+
+    conversations.forEach(conversation => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.textContent = conversation.title;
+        item.title = conversation.title;
+
+        if (conversation.id === currentId) {
+            item.classList.add("active");
+        }
+
+        item.onclick = () => openChat(conversation.id);
+        historyBox.appendChild(item);
+    });
+}
+
+function openChat(id) {
+    const conversation = conversations.find(c => c.id === id);
+    if (!conversation) return;
+
+    loggedOut = false;
+    currentId = id;
+    renderConversation(conversation);
+    updateHistory();
+    enableInput();
+    setActive("history");
+    statusText.textContent = "Conversation opened";
+}
+
+function showHistory() {
+    if (loggedOut) return;
+
+    setActive("history");
+
+    if (conversations.length === 0) {
+        chat.innerHTML = `
+            <div class="page">
+                <h2>No chat history yet</h2>
+                <p>Your conversations will appear here after you send your first message.</p>
+                <button class="action-btn" onclick="newChat()">Start a chat</button>
+            </div>`;
+        return;
+    }
+
+    chat.innerHTML = `
+        <div class="page">
+            <h2>Chat History</h2>
+            <p>Select a conversation from the Recent Chats list in the sidebar.</p>
+            <button class="action-btn" onclick="openChat(conversations[0].id)">
+                Open latest chat
+            </button>
+            <button class="action-btn secondary" onclick="newChat()">
+                New Chat
+            </button>
+        </div>`;
+}
+
+function settings() {
+    if (loggedOut) return;
+
+    setActive("settings");
+    chat.innerHTML = `
+        <div class="page">
+            <h2>Settings</h2>
+            <p><b>Application:</b> My AI Chat</p>
+            <p><b>Theme:</b> Beige and Coffee Brown</p>
+            <p><b>Chat storage:</b> Current browser session only</p>
+            <button class="action-btn" onclick="newChat()">Back to Chat</button>
+            <button class="action-btn secondary" onclick="clearHistory()">
+                Clear Chat History
+            </button>
+        </div>`;
+}
+
+function clearHistory() {
+    const confirmed = confirm("Are you sure you want to delete all chat history?");
+    if (!confirmed) return;
+
+    conversations = [];
+    currentId = null;
+    updateHistory();
+    newChat();
+}
+
+function logout() {
+    loggedOut = true;
+    currentId = null;
+    setActive("");
+
+    chat.innerHTML = `
+        <div class="page">
+            <div class="bot-icon">🤖</div>
+            <h2>You have logged out</h2>
+            <p>This is a demo logout screen. No real account session is connected.</p>
+            <button class="action-btn" onclick="newChat()">Back to Chat</button>
+        </div>`;
+
+    input.disabled = true;
+    sendBtn.disabled = true;
+    input.placeholder = "You are logged out";
+    statusText.textContent = "Logged out";
+}
+
+function enableInput() {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.placeholder = "Ask me anything...";
+}
+
+function getReply(message) {
+    const text = message.toLowerCase();
+
+    if (/\b(hi|hello|hey)\b/.test(text)) {
+        return "Hello! Welcome to My AI Chat. How can I help you today?";
+    }
+
+    if (text.includes("program") || text.includes("coding") ||
+        text.includes("code") || text.includes("cpp")) {
+        return "Start with basic concepts, practise small programs, and understand the logic step by step. Which programming topic are you learning?";
+    }
+
+    if (text.includes("write") || text.includes("paragraph") ||
+        text.includes("essay")) {
+        return "Start with your main idea, add supporting points, and finish with a clear conclusion. I can help you plan the structure.";
+    }
+
+    if (text.includes("idea")) {
+        return "Write down three possible ideas, compare their benefits, and choose the one that best fits your goal.";
+    }
+
+    if (text.includes("explain") || text.includes("topic")) {
+        return "Sure! Tell me the exact topic you want to learn, and we can break it into smaller concepts.";
+    }
+
+    if (text.includes("who are you") || text.includes("your name")) {
+        return "I'm My AI Chat, a simple chat interface demo built with HTML, CSS, and JavaScript.";
+    }
+
+    return "Thanks for your message! This version uses sample replies, not a live AI model. To get real AI-generated answers, an AI API and backend must be connected.";
+}
+
+function sendMessage(event) {
+    event.preventDefault();
+    if (loggedOut) return;
+
+    const message = input.value.trim();
+    if (!message) {
+        input.focus();
+        return;
+    }
+
+    let conversation = getCurrentChat();
+
+    if (!conversation) {
+        conversation = createConversation();
+    }
+
+    if (conversation.messages.length === 0) {
+        conversation.title = message.length > 28
+            ? message.slice(0, 28) + "..."
+            : message;
+    }
+
+    conversation.messages.push({ text: message, type: "user" });
+    conversation.messages.push({
+        text: getReply(message),
+        type: "ai"
+    });
+
+    input.value = "";
+    renderConversation(conversation);
+    updateHistory();
+    setActive("history");
+    statusText.textContent = "Demo response";
+    input.focus();
+}
+
+function askSuggestion(message) {
+    if (loggedOut) return;
+    input.value = message;
+    document.getElementById("chatForm").requestSubmit();
+}
+
+document.getElementById("chatForm").addEventListener("submit", sendMessage);
+
+welcomeScreen();
+updateHistory();
+</script>
+</body>
+</html>
